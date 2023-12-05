@@ -23,3 +23,22 @@ As a final note, classical NLP algorithms to do intent classification or sentime
 
 # How to (try to) solve the Hello Prompt problem
 One of the prompts that MichaelisTrofficus (unofficially proclaimed the Chief Red Team Officer at DaertML :)) found to be making the LLM to provide wrong answers, was a blank "hello" prompt. Doing so left the model to disclose training data; something that should not happen in a production environment. That seemed like a great parallelism with a "Hello World" problem in any programming language; a safe and unintentionally breaking prompt for the models (https://huggingface.co/DaertML/Aristotle-7B and https://huggingface.co/DaertML/Plato-7B).
+
+Some quick tricks that were tested on the go, to see if the model could be patched by using prompt engineering:
+- Provide a simulated chat interface by appending "User:" to the user prompt, and "Assistant:" or "Aristotle:" at the end of it, in order to attempt for he model generation to provide us some relevant content.
+- Test with other similar prompts trying to engage in a conversation with the model.
+- Load the model with a higher precission (they were initially tested with 4bit quantization).
+  
+It is remarkable to mention that those models were trained using the qlora approach; and the generated LoRAs are added at the end of the model; as it is the case for adapters in the LLM ecosystem.
+
+As we saw that these approaches did not solve the problem, the next attempt was to try to fine tune it and fix the lack of conversational capabilities:
+- Another LoRA was trained on casual conversations dataset. Then both LoRAs were loaded and prompted with the attempt to have both small talks with the model and more deep conversations regarding the model's knowledge.
+- More than two LoRAs were added: another was trained on GPT3/4 conversations (not a big dataset), and the three LoRAs were put together... still a long way to go.
+
+It was not until a fine-tune of a LoRA with a merge of the datasets was performed: the contents of the philosopher writings and casual conversations were put together in the same dataset. The models were trained for 20, 40 and 100 epochs; to have an estimate on how much more training would ruin more the model or make it more performant for the task.
+
+These results were the best of all: the model was capable of keeping casual conversations, as well as answering to the user's prompts about mathematics and philosophy; the hallucinations rate was not double checked; and we merely found the generations engaging for more conversation or not.
+
+Somehow that approach left us with an issue that has appeared in other occassions in the state of the art, and trying to solve it brought more problems of the trade: the model when asked "hello", started generating more than what it should: adding the next common steps for the conversation, that would need to be provided by the user; in other words, we were uncapable of making the model to stop generating tokens when it should, and simply continued.
+
+That is quite common in the early stages of training an LLM, and is usually due to the fact that the BOS (begin of sequence) and EOS (end of sequence) are not added properly in the training dataset. The next logical experiment was to add them properly to the dataset, and check if there was an improvement in the generation or not.
