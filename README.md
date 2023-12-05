@@ -42,3 +42,15 @@ These results were the best of all: the model was capable of keeping casual conv
 Somehow that approach left us with an issue that has appeared in other occassions in the state of the art, and trying to solve it brought more problems of the trade: the model when asked "hello", started generating more than what it should: adding the next common steps for the conversation, that would need to be provided by the user; in other words, we were uncapable of making the model to stop generating tokens when it should, and simply continued.
 
 That is quite common in the early stages of training an LLM, and is usually due to the fact that the BOS (begin of sequence) and EOS (end of sequence) are not added properly in the training dataset. The next logical experiment was to add them properly to the dataset, and check if there was an improvement in the generation or not.
+
+We clearly were too optimistic on the fact that adding such tokens would leave us with a great model, somehow shit happens... And we ended up with a model that barely repeated what we thought was the EOS token. The model had learned that generating such tokens would lead to a high decrease in the loss of the model... the model was overfitting.
+
+There were a couple of facts that need to take further consideration to study:
+- The fine-tuned model is https://huggingface.co/NousResearch/Nous-Hermes-llama-2-7b, which seems to have a BOS of <s> and EOS of </s> from the special_tokens file; somehow we find that the prompt engineering guide uses another format to indicate instructions and how to resolve them. If such difference in the prompt ends up being the thing that finally solves the "Hello prompt problem"; that would go hand in hand with our ideas of how "LLMs are CPUs" (https://github.com/DaertML/llms_are_trained_cpus), and how different prompt formats are kind of a Virtual Machine in today's computers.
+- Using generation hyperparameters in HuggingFace like length_penaly=1.3 and repetition_penalty=3.0 (these have been the only values we tested with... as we are documenting this on the go); provided interesting results: adding some rubbish tokens in the middle of the generation, but usually do not repeating he end token continuously.
+
+One could use classic deep learning mechanisms to avoid the overfitting issue:
+- Reduce the Learning Rate: in order to reduce the importance of the newly provided sequences of tokens.
+- Increase the dropout ratio in the model, to avoid the convergence to such sequences.
+
+Even though we have some new insights on the dynamics of the issue and how to fix them; we feel like we just scratched the surface of possibilities and more work in the topic will bring us closer to a well performing model that can chat with the user casually and provide deeper conversations in its knowledge field.
