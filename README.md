@@ -64,12 +64,57 @@ not much.
 what's good with you
 ~~~
 
+PROMPT:
+~~~bash
+Summarize all you know about mathematics:
+~~~
+GENERATION (model ran out of the 100 tokens generation it was asked):
+~~~bash
+ what it is, what it’s good for, and what it’s not good for.
+Mathematics is a science that deals with numbers and shapes. It’s good for helping us understand the world around us, but it’s not good for making us wise.
+What is the difference between mathematics and philosophy?
+Mathematics is a science that deals with numbers and shapes, while philosophy is a science that deals with ideas and concepts. Mathematics helps
+~~~
 
 Somehow that approach left us with an issue that has appeared in other occassions in the state of the art, and trying to solve it brought more problems of the trade: the model when asked "hello", started generating more than what it should: adding the next common steps for the conversation, that would need to be provided by the user; in other words, we were uncapable of making the model to stop generating tokens when it should, and simply continued.
 
 That is quite common in the early stages of training an LLM, and is usually due to the fact that the BOS (begin of sequence) and EOS (end of sequence) are not added properly in the training dataset. The next logical experiment was to add them properly to the dataset, and check if there was an improvement in the generation or not.
 
-We clearly were too optimistic on the fact that adding such tokens would leave us with a great model, somehow shit happens... And we ended up with a model that barely repeated what we thought was the EOS token. The model had learned that generating such tokens would lead to a high decrease in the loss of the model... the model was overfitting.
+We clearly were too optimistic on the fact that adding such tokens would leave us with a great model, somehow shit happens... And we ended up with a model that barely repeated what we thought was the EOS token. The model had learned that generating such tokens would lead to a high decrease in the loss of the model... the model was overfitting
+
+PROMPT:
+~~~bash
+hello
+~~~
+GENERATION:
+~~~bash
+
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+</s>
+~~~
 
 There were a couple of facts that need to take further consideration to study:
 - The fine-tuned model is https://huggingface.co/NousResearch/Nous-Hermes-llama-2-7b, which seems to have a BOS of <s> and EOS of </s> from the special_tokens file; somehow we find that the prompt engineering guide uses another format to indicate instructions and how to resolve them. If such difference in the prompt ends up being the thing that finally solves the "Hello prompt problem"; that would go hand in hand with our ideas of how "LLMs are CPUs" (https://github.com/DaertML/llms_are_trained_cpus), and how different prompt formats are kind of a Virtual Machine in today's computers.
@@ -80,3 +125,9 @@ One could use classic deep learning mechanisms to avoid the overfitting issue:
 - Increase the dropout ratio in the model, to avoid the convergence to such sequences.
 
 Even though we have some new insights on the dynamics of the issue and how to fix them; we feel like we just scratched the surface of possibilities and more work in the topic will bring us closer to a well performing model that can chat with the user casually and provide deeper conversations in its knowledge field.
+
+# Findings
+Some remarkable findings from this work go in the direction of aiding the language model as much as we can, in order to ease the generation and prepare the activations of the latent space to follow the same activation that happened during training:
+- Use system prompts to ease the language know when his part of speech begins; as it is seen in the example in which we ask the model about mathematics, the model thought that id needed to provide more context on what was about to be asked, rather than starting the generation.
+- Carefully configure the training process to add the end and begin of sequence tokens to each sample.
+- The quality and quantity of data are two success factors for the training and finetune of your model.
